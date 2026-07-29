@@ -1,0 +1,74 @@
+-- โหลด Rayfield UI Library
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- สร้าง Window หลัก
+local Window = Rayfield:CreateWindow({
+   Name = "MM2 Coin Farm - Simple",
+   LoadingTitle = "กำลังโหลดระบบ...",
+   LoadingSubtitle = "โดย AI Collaborator",
+   ConfigurationSaving = {
+      Enabled = false,
+      FolderName = nil,
+      FileName = "MM2Config"
+   },
+   KeySystem = false,
+})
+
+-- สร้าง Tab หลัก
+local Tab = Window:CreateTab("Main", "coins")
+
+-- กำหนดค่าเริ่มต้นให้ตัวแปรเปิด-ปิด
+_G.AutoFarmCoins = false
+
+-- ฟังก์ชันสำหรับเก็บเหรียญใน MM2
+local function AutoFarm()
+    task.spawn(function()
+        while _G.AutoFarmCoins do
+            pcall(function()
+                local player = game.Players.LocalPlayer
+                local character = player.Character
+                if character and character:FindFirstChild("HumanoidRootPart") then
+                    -- ค้นหาเหรียญใน Workspace (MM2 มักจะเก็บไว้ในแมพที่กำลังเล่นอยู่)
+                    for _, v in ipairs(workspace:GetDescendants()) do
+                        if not _G.AutoFarmCoins then break end
+                        
+                        -- เช็คว่าใช่เหรียญหรือไม่ (ดูจากชื่อหรือมี TouchInterest)
+                        if v:IsA("BasePart") and (v.Name == "Coin" or v:FindFirstChild("TouchInterest")) then
+                            character.HumanoidRootPart.CFrame = v.CFrame
+                            task.wait(0.15) -- หน่วงเวลาไม่ให้เทเลพอร์ตเร็วเกินไปจนโดนเตะ
+                        end
+                    end
+                end
+            end)
+            task.wait(0.5)
+        end
+    end)
+end
+
+-- สร้าง Toggle สำหรับเปิด-ปิดฟังก์ชันเก็บเหรียญ
+local Toggle = Tab:CreateToggle({
+   Name = "ออโต้เก็บเหรียญ (Auto Farm Coins)",
+   CurrentValue = false,
+   Flag = "AutoFarmCoinsFlag",
+   Callback = function(Value)
+      _G.AutoFarmCoins = Value
+      if Value then
+         Rayfield:Notify({
+            Title = "เปิดการทำงาน",
+            Content = "เริ่มเก็บเหรียญอัตโนมัติแล้ว!",
+            Duration = 3,
+            Image = 4483362458,
+         })
+         AutoFarm()
+      else
+         Rayfield:Notify({
+            Title = "ปิดการทำงาน",
+            Content = "หยุดเก็บเหรียญเรียบร้อย",
+            Duration = 3,
+            Image = 4483362458,
+         })
+      end
+   end,
+})
+
+Rayfield:LoadConfiguration()
